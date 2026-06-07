@@ -1,0 +1,29 @@
+﻿###############################################################################
+# House Ambition: Iron Grip — on_action
+#
+# monthly_playable_pulse fires once per month for the human player.
+# We use it purely as a clock tick: the effect sweeps all landed AI
+# house-member rulers and runs the three passes for each of them.
+# The player character is never in the loop.
+###############################################################################
+
+monthly_playable_pulse = {
+	on_actions = {
+		ha_ig_monthly_sweep
+	}
+}
+
+ha_ig_monthly_sweep = {
+	trigger = {
+		is_ai = no
+		is_landed = yes
+		exists = house
+		any_in_global_list = {
+			variable = ha_iron_grip_list
+			this = root.house
+		}
+	}
+	effect = {
+		ha_ig_sweep_effect = yes
+	}
+}

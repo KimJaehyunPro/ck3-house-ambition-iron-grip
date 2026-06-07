@@ -1,0 +1,77 @@
+﻿###############################################################################
+# House Ambition: Iron Grip — events
+###############################################################################
+namespace = ha_ig
+
+##############################################################################
+# ha_ig.001 — Control Panel
+# Opened by the house_ambition_iron_grip decision.
+# Enable/disable re-fire the same event to refresh the display.
+##############################################################################
+ha_ig.001 = {
+	type = character_event
+	title = ha_ig.001.t
+	theme = realm
+	left_portrait = { character = root }
+
+	desc = {
+		triggered_desc = {
+			trigger = {
+				any_in_global_list = {
+					variable = ha_iron_grip_list
+					this = root.house
+				}
+			}
+			desc = ha_ig.001.status_on
+		}
+		triggered_desc = {
+			trigger = {
+				NOT = {
+					any_in_global_list = {
+						variable = ha_iron_grip_list
+						this = root.house
+					}
+				}
+			}
+			desc = ha_ig.001.status_off
+		}
+	}
+
+	option = {
+		name = ha_ig.001.opt.enable
+		trigger = {
+			NOT = {
+				any_in_global_list = {
+					variable = ha_iron_grip_list
+					this = root.house
+				}
+			}
+		}
+		add_to_global_variable_list = {
+			name = ha_iron_grip_list
+			target = root.house
+		}
+		debug_log = "iron_grip: panel - ENABLED"
+		trigger_event = { id = ha_ig.001 }
+	}
+
+	option = {
+		name = ha_ig.001.opt.disable
+		trigger = {
+			any_in_global_list = {
+				variable = ha_iron_grip_list
+				this = root.house
+			}
+		}
+		remove_list_global_variable = {
+			name = ha_iron_grip_list
+			target = root.house
+		}
+		debug_log = "iron_grip: panel - DISABLED"
+		trigger_event = { id = ha_ig.001 }
+	}
+
+	option = {
+		name = ha_ig.001.opt.close
+	}
+}

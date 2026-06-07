@@ -1,0 +1,54 @@
+﻿###############################################################################
+# House Ambition: Iron Grip — decisions
+###############################################################################
+
+# Opens the Iron Grip control panel.
+house_ambition_iron_grip = {
+	ai_check_interval = 0
+
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_dynasty_house.dds"
+	}
+
+	desc = house_ambition_iron_grip_desc
+	selection_tooltip = house_ambition_iron_grip_tooltip
+
+	is_shown = {
+		is_ai = no
+		is_landed = yes
+		exists = house
+	}
+
+	effect = {
+		trigger_event = { id = ha_ig.001 }
+	}
+
+	ai_will_do = { base = 0 }
+}
+
+# DEBUG — Immediately runs the full sweep for all AI house-member rulers.
+# Only visible when launched with -debug_mode.
+ha_iron_grip_debug = {
+	ai_check_interval = 0
+	decision_group_type = debug
+
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_misc.dds"
+	}
+
+	desc = ha_iron_grip_debug_desc
+	selection_tooltip = ha_iron_grip_debug_tooltip
+
+	is_shown = {
+		is_ai = no
+		is_landed = yes
+		exists = house
+		debug_only = yes
+	}
+
+	effect = {
+		ha_ig_sweep_effect = yes
+	}
+
+	ai_will_do = { base = 0 }
+}

@@ -1,0 +1,26 @@
+﻿l_english:
+ #############################################################################
+ # House Ambition: Iron Grip - English localisation
+ #############################################################################
+
+ # --- Main decision -----------------------------------------------------------
+ house_ambition_iron_grip:0         "House Ambition: Iron Grip"
+ house_ambition_iron_grip_desc:0    "Open the Iron Grip control panel to enable or disable automated house consolidation for AI house-member rulers."
+ house_ambition_iron_grip_tooltip:0 "Open the Iron Grip control panel."
+ house_ambition_iron_grip_confirm:0 "Open Panel"
+
+ # --- Debug decision ----------------------------------------------------------
+ ha_iron_grip_debug:0         "House Ambition: RUN Iron Grip Now"
+ ha_iron_grip_debug_desc:0    "(DEBUG) Immediately runs all three Iron Grip passes for every AI house-member ruler. Check debug.log for iron_grip: lines."
+ ha_iron_grip_debug_tooltip:0 "Run the full Iron Grip sweep right now."
+ ha_iron_grip_debug_confirm:0 "Run Sweep Now"
+
+ # --- Control panel (ha_ig.001) -----------------------------------------------
+ ha_ig.001.t:0          "House Ambition: Iron Grip"
+
+ ha_ig.001.status_on:0  "#bold#STATUS#!  Iron Grip is #bold##green#ACTIVE#!#! for your house.\nAll AI house-member rulers will monthly imprison and revoke titles from non-house vassals (if they have grounds and superior military strength), and grant excess domains to safe house members.\n"
+ ha_ig.001.status_off:0 "#bold#STATUS#!  Iron Grip is #bold##weak#INACTIVE#!#! for your house. No automation is running.\n"
+
+ ha_ig.001.opt.enable:0  "Enable Iron Grip for this house"
+ ha_ig.001.opt.disable:0 "Disable Iron Grip for this house"
+ ha_ig.001.opt.close:0   "Close"

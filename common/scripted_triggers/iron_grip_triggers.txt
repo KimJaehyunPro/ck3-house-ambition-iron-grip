@@ -1,0 +1,48 @@
+﻿###############################################################################
+# House Ambition: Iron Grip — scripted triggers
+# Callers must have scope:ha_ig_house set before invoking these.
+###############################################################################
+
+# A child is "safe" when their own children will stay in the house.
+#   Male child: not in a matrilineal arrangement with an outsider.
+#   Female child: not in a patrilineal arrangement with an outsider.
+# In-house marriages of either type are always safe.
+ha_ig_safe_child_trigger = {
+	house = scope:ha_ig_house
+	OR = {
+		AND = {
+			is_male = yes
+			NOT = {
+				any_spouse = {
+					is_female = yes
+					matrilinear_marriage = yes
+					NOT = { house = scope:ha_ig_house }
+				}
+			}
+			NOT = {
+				betrothed ?= {
+					is_female = yes
+					matrilinear_betrothal = yes
+					NOT = { house = scope:ha_ig_house }
+				}
+			}
+		}
+		AND = {
+			is_female = yes
+			NOT = {
+				any_spouse = {
+					is_male = yes
+					patrilinear_marriage = yes
+					NOT = { house = scope:ha_ig_house }
+				}
+			}
+			NOT = {
+				betrothed ?= {
+					is_male = yes
+					patrilinear_betrothal = yes
+					NOT = { house = scope:ha_ig_house }
+				}
+			}
+		}
+	}
+}

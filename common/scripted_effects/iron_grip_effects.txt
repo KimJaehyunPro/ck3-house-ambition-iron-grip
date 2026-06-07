@@ -1,0 +1,219 @@
+﻿###############################################################################
+# House Ambition: Iron Grip — scripted effects
+###############################################################################
+
+# ---------------------------------------------------------------------------
+# Entry point called by the monthly pulse and the debug decision.
+# Loops through every landed AI house-member ruler and runs all three passes
+# for each of them relative to their own vassal list and domain.
+# ---------------------------------------------------------------------------
+ha_ig_sweep_effect = {
+	debug_log = "iron_grip: starting monthly sweep"
+	root.house = {
+		every_house_member = {
+			limit = {
+				is_ai = yes
+				is_landed = yes
+				NOT = { is_imprisoned = yes }
+				NOT = { has_trait = incapable }
+			}
+			debug_log = "iron_grip: running passes for AI house-member ruler"
+			ha_ig_house_law_effect = yes
+		}
+	}
+}
+
+# ---------------------------------------------------------------------------
+# Per-ruler dispatcher.  Called once per AI ruler from ha_ig_sweep_effect.
+# root = that AI ruler for the duration of all three passes.
+# ---------------------------------------------------------------------------
+ha_ig_house_law_effect = {
+	house = { save_scope_as = ha_ig_house }
+	debug_log = "iron_grip: effect running"
+	ha_ig_imprison_effect = yes
+	ha_ig_revoke_effect = yes
+	ha_ig_grant_effect = yes
+}
+
+# ---------------------------------------------------------------------------
+# Pass 1 — Imprison
+# Conditions:
+#   - vassal is not in root's house
+#   - root has a valid imprisonment reason against them
+#   - root has strictly more military strength than the vassal
+# ---------------------------------------------------------------------------
+ha_ig_imprison_effect = {
+	every_vassal = {
+		limit = {
+			NOT = { house = scope:ha_ig_house }
+			has_imprisonment_reason = root
+			is_imprisoned = no
+			root = { military_strength > prev.military_strength }
+		}
+		save_scope_as = ha_ig_prisoner
+		debug_log = "iron_grip: pass 1 - imprisoning vassal"
+		root = {
+			imprison = {
+				target = scope:ha_ig_prisoner
+				type = dungeon
+			}
+		}
+	}
+}
+
+# ---------------------------------------------------------------------------
+# Pass 2 — Revoke
+# Conditions:
+#   - vassal is not in root's house
+#   - root has a valid revocation reason against them
+#   - vassal holds at least one landed title of county tier or above
+#   - root has strictly more military strength than the vassal
+# ---------------------------------------------------------------------------
+ha_ig_revoke_effect = {
+	every_vassal = {
+		limit = {
+			NOT = { house = scope:ha_ig_house }
+			has_revoke_title_reason = root
+			any_held_title = {
+				is_landless_type_title = no
+				tier >= tier_county
+			}
+			root = { military_strength > prev.military_strength }
+		}
+		save_scope_as = ha_ig_revoke_target
+		debug_log = "iron_grip: pass 2 - revoking from vassal"
+
+		create_title_and_vassal_change = {
+			type = revoked
+			save_scope_as = ha_ig_change
+			add_claim_on_loss = no
+		}
+		primary_title = {
+			change_title_holder_include_vassals = {
+				holder = root
+				change = scope:ha_ig_change
+			}
+		}
+		resolve_title_and_vassal_change = scope:ha_ig_change
+		consume_revoke_title_reason = root
+	}
+}
+
+# ---------------------------------------------------------------------------
+# Pass 3 — Grant
+# Only fires when root is over their own domain limit.
+# Uses random_realm_character so it finds unlanded house members anywhere
+# in root's realm, including in vassal courts (not just root's own court).
+#
+# Safe recipient criteria:
+#   A) Has a primary heir already in the house
+#   B) Male, visibly fertile: has a safe child OR medium+ fertility
+#   C) Female, matrilineal, visibly fertile: has a safe child OR medium+ fertility
+#   D) Female, unmarried, visibly fertile, medium+ fertility
+#
+# Excluded regardless: imprisoned, incapable, female in a patrilineal
+#   marriage to an outsider (her children would leave the house).
+# ---------------------------------------------------------------------------
+ha_ig_grant_effect = {
+	if = {
+		limit = { domain_size > domain_limit }
+
+		debug_log = "iron_grip: pass 3 - over domain limit, seeking recipient"
+
+		random_realm_character = {
+			limit = {
+				house = scope:ha_ig_house
+				NOT = { this = root }
+				is_landed = no
+				is_adult = yes
+				NOT = { is_imprisoned = yes }
+				NOT = { has_trait = incapable }
+				NOT = {
+					is_female = yes
+					is_married = yes
+					NOT = { matrilinear_marriage = yes }
+					any_spouse = {
+						is_male = yes
+						patrilinear_marriage = yes
+						NOT = { house = scope:ha_ig_house }
+					}
+				}
+				OR = {
+					primary_heir ?= { house = scope:ha_ig_house }
+					AND = {
+						is_male = yes
+						is_visibly_fertile = yes
+						OR = {
+							any_child = { ha_ig_safe_child_trigger = yes }
+							fertility >= medium_fertility
+						}
+					}
+					AND = {
+						is_female = yes
+						matrilinear_marriage = yes
+						is_visibly_fertile = yes
+						OR = {
+							any_child = { ha_ig_safe_child_trigger = yes }
+							fertility >= medium_fertility
+						}
+					}
+					AND = {
+						is_female = yes
+						NOT = { is_married = yes }
+						is_visibly_fertile = yes
+						fertility >= medium_fertility
+					}
+				}
+			}
+			weight = {
+				base = 10
+				modifier = {
+					add = 20
+					is_courtier_of = root
+				}
+				modifier = {
+					add = 30
+					primary_heir ?= { house = scope:ha_ig_house }
+				}
+			}
+			save_scope_as = ha_ig_recipient
+		}
+
+		if = {
+			limit = { exists = scope:ha_ig_recipient }
+			debug_log = "iron_grip: pass 3 - recipient found"
+
+			random_held_title = {
+				limit = {
+					tier = tier_county
+					NOT = { this = root.primary_title }
+					NOT = { this = root.capital_county }
+				}
+				save_scope_as = ha_ig_title
+			}
+
+			if = {
+				limit = { exists = scope:ha_ig_title }
+				debug_log = "iron_grip: pass 3 - granting county to recipient"
+				create_title_and_vassal_change = {
+					type = granted
+					save_scope_as = ha_ig_grant_change
+					add_claim_on_loss = no
+				}
+				scope:ha_ig_title = {
+					change_title_holder = {
+						holder = scope:ha_ig_recipient
+						change = scope:ha_ig_grant_change
+					}
+				}
+				resolve_title_and_vassal_change = scope:ha_ig_grant_change
+			}
+			else = {
+				debug_log = "iron_grip: over domain limit but no grantable county found"
+			}
+		}
+		else = {
+			debug_log = "iron_grip: over domain limit but no safe house member found in realm"
+		}
+	}
+}
