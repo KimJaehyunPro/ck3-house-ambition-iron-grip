@@ -1,29 +1,47 @@
 ﻿###############################################################################
 # House Ambition: Iron Grip — on_action
 #
-# monthly_playable_pulse fires once per month for the human player.
-# We use it purely as a clock tick: the effect sweeps all landed AI
-# house-member rulers and runs the three passes for each of them.
-# The player character is never in the loop.
+# CK3 has NO monthly playable pulse (only yearly / quarterly / etc.), so the
+# monthly cadence is driven by the self-rescheduling event ha_ig.100. Here we
+# only SEED that event on the human player:
+#   - at game start (immediate on a fresh game), and
+#   - on the quarterly pulse as a safety net, so it also starts after
+#     succession or when the mod is added to an existing save.
+# A character flag prevents a player from ever running two tick chains at once.
 ###############################################################################
 
-monthly_playable_pulse = {
+on_game_start_after_lobby = {
 	on_actions = {
-		ha_ig_monthly_sweep
+		ha_ig_seed_monthly_on_start
 	}
 }
 
-ha_ig_monthly_sweep = {
-	trigger = {
-		is_ai = no
-		is_landed = yes
-		exists = house
-		any_in_global_list = {
-			variable = ha_iron_grip_list
-			this = root.house
+ha_ig_seed_monthly_on_start = {
+	effect = {
+		every_player = {
+			limit = {
+				is_ai = no
+				NOT = { has_character_flag = ha_ig_monthly_tick_running }
+			}
+			add_character_flag = ha_ig_monthly_tick_running
+			trigger_event = { id = ha_ig.100 }
 		}
 	}
+}
+
+quarterly_playable_pulse = {
+	on_actions = {
+		ha_ig_seed_monthly_tick
+	}
+}
+
+ha_ig_seed_monthly_tick = {
+	trigger = {
+		is_ai = no
+		NOT = { has_character_flag = ha_ig_monthly_tick_running }
+	}
 	effect = {
-		ha_ig_sweep_effect = yes
+		add_character_flag = ha_ig_monthly_tick_running
+		trigger_event = { id = ha_ig.100 }
 	}
 }

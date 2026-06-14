@@ -75,3 +75,29 @@ ha_ig.001 = {
 		name = ha_ig.001.opt.close
 	}
 }
+
+##############################################################################
+# ha_ig.100 — Monthly tick (CK3 has no monthly pulse, so we self-reschedule)
+# root = the human player. Reschedules itself every 30 days, then runs the
+# sweep when this player's house has Iron Grip enabled. Seeded from the
+# on_action file; on the player's death the pending event is dropped and the
+# quarterly pulse re-seeds the new player.
+##############################################################################
+ha_ig.100 = {
+	hidden = yes
+	type = character_event
+
+	immediate = {
+		trigger_event = { id = ha_ig.100  days = 30 }
+		if = {
+			limit = {
+				exists = house
+				any_in_global_list = {
+					variable = ha_iron_grip_list
+					this = root.house
+				}
+			}
+			ha_ig_sweep_effect = yes
+		}
+	}
+}

@@ -20,77 +20,64 @@ ha_ig_sweep_effect = {
 }
 
 # Per-ruler dispatcher. this = the AI house member ruler.
+# Imprison & revoke are aggressive and can trigger revolts, so they pause
+# entirely while the ruler is in ANY war. Grant (giving land to own house) is
+# harmless and always runs.
 ha_ig_house_law_effect = {
 	save_scope_as = ha_ig_ruler
 	house = { save_scope_as = ha_ig_house }
 	debug_log = "iron_grip: ----- running passes for ruler below (ha_ig_ruler) -----"
 	debug_log_scopes = yes
-	ha_ig_imprison_effect = yes
-	ha_ig_revoke_effect = yes
+	if = {
+		limit = { is_at_war = no }
+		ha_ig_imprison_effect = yes
+		ha_ig_revoke_effect = yes
+	}
+	else = {
+		debug_log = "iron_grip: ruler is at war - imprison & revoke paused until peace"
+	}
 	ha_ig_grant_effect = yes
 }
 
-# Pass 1 — Imprison via the REAL vanilla interaction. run_interaction makes the
-# AI ruler actually send imprison_interaction (send_threshold = decline = send
-# even if the vassal will refuse), so vanilla's own success-chance roll,
-# on_accept (jail) and on_decline (rebellion / flee) all resolve exactly as in
-# the base game. We only gate on: non-house, has imprisonment reason (from the
-# ruler), ruler militarily stronger, and the interaction being currently valid.
+# Pass 1 — Imprison via the REAL vanilla interaction, ONE criminal per sweep so
+# the ruler never starts several revolts at once. run_interaction sends the
+# actual imprison_interaction (send_threshold = decline = send even if refusal
+# is expected); vanilla's success-chance roll, on_accept (jail) and on_decline
+# (rebellion / flee) then resolve exactly as in the base game. If the target
+# revolts the ruler is now at war, and the dispatcher's war gate pauses this
+# pass until peace. Skipped while the ruler is on the post-imprison hostile-
+# action cooldown (vanilla's 10-day flag_hostile_actions_disabled_delay), which
+# is what blocks a second send in the same window.
+# Per-vassal gates: non-house, not already imprisoned, ruler has an imprisonment
+# reason, ruler militarily stronger, interaction currently valid.
 ha_ig_imprison_effect = {
 	if = {
-		limit = { NOT = { any_vassal = { always = yes } } }
-		debug_log = "iron_grip: pass 1 - ruler has no direct vassals"
+		limit = { scope:ha_ig_ruler = { has_character_flag = flag_hostile_actions_disabled_delay } }
+		debug_log = "iron_grip: pass 1 - ruler on hostile-action cooldown, skipping this sweep"
 	}
 	else = {
-		every_vassal = {
-			save_scope_as = ha_ig_vassal
-			if = {
-				limit = { house = scope:ha_ig_house }
-				debug_log = "iron_grip: pass 1 - skip vassal: same house"
-			}
-			else_if = {
-				limit = { is_imprisoned = yes }
-				debug_log = "iron_grip: pass 1 - skip vassal: already imprisoned"
-			}
-			else_if = {
-				limit = {
-					NOT = {
-						scope:ha_ig_ruler = { has_imprisonment_reason = scope:ha_ig_vassal }
-					}
-				}
-				debug_log = "iron_grip: pass 1 - skip vassal: ruler has no imprisonment reason"
-			}
-			else_if = {
-				limit = {
-					NOT = {
-						scope:ha_ig_ruler = { max_military_strength > scope:ha_ig_vassal.max_military_strength }
-					}
-				}
-				debug_log = "iron_grip: pass 1 - skip vassal: not weaker than ruler"
-			}
-			else_if = {
-				limit = {
-					NOT = {
-						scope:ha_ig_ruler = {
-							is_character_interaction_valid = {
-								recipient = scope:ha_ig_vassal
-								interaction = imprison_interaction
-							}
-						}
-					}
-				}
-				debug_log = "iron_grip: pass 1 - skip vassal: imprison interaction not currently valid"
-			}
-			else = {
-				debug_log = "iron_grip: pass 1 - RUNNING vanilla imprison_interaction (scopes below)"
-				debug_log_scopes = yes
+		random_vassal = {
+			limit = {
+				NOT = { house = scope:ha_ig_house }
+				is_imprisoned = no
+				scope:ha_ig_ruler = { has_imprisonment_reason = prev }
+				scope:ha_ig_ruler = { max_military_strength > prev.max_military_strength }
 				scope:ha_ig_ruler = {
-					run_interaction = {
+					is_character_interaction_valid = {
+						recipient = prev
 						interaction = imprison_interaction
-						actor = scope:ha_ig_ruler
-						recipient = scope:ha_ig_vassal
-						send_threshold = decline
 					}
+				}
+			}
+			save_scope_as = ha_ig_vassal
+			debug_log = "iron_grip: pass 1 - RUNNING vanilla imprison_interaction (scopes below)"
+			debug_log_scopes = yes
+			scope:ha_ig_ruler = {
+				run_interaction = {
+					interaction = imprison_interaction
+					actor = scope:ha_ig_ruler
+					recipient = scope:ha_ig_vassal
+					send_threshold = decline
 				}
 			}
 		}
