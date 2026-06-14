@@ -23,28 +23,34 @@ ha_ig_sweep_effect = {
 ha_ig_house_law_effect = {
 	save_scope_as = ha_ig_ruler
 	house = { save_scope_as = ha_ig_house }
-	debug_log = "iron_grip: ----- running passes for ruler [ha_ig_ruler.GetName] -----"
+	debug_log = "iron_grip: ----- running passes for ruler below (ha_ig_ruler) -----"
+	debug_log_scopes = yes
 	ha_ig_imprison_effect = yes
 	ha_ig_revoke_effect = yes
 	ha_ig_grant_effect = yes
 }
 
-# Pass 1 — Imprison. Reason checks evaluated FROM the ruler (direction matters).
+# Pass 1 — Imprison via the REAL vanilla interaction. run_interaction makes the
+# AI ruler actually send imprison_interaction (send_threshold = decline = send
+# even if the vassal will refuse), so vanilla's own success-chance roll,
+# on_accept (jail) and on_decline (rebellion / flee) all resolve exactly as in
+# the base game. We only gate on: non-house, has imprisonment reason (from the
+# ruler), ruler militarily stronger, and the interaction being currently valid.
 ha_ig_imprison_effect = {
 	if = {
 		limit = { NOT = { any_vassal = { always = yes } } }
-		debug_log = "iron_grip: pass 1 - [ha_ig_ruler.GetName] has no direct vassals"
+		debug_log = "iron_grip: pass 1 - ruler has no direct vassals"
 	}
 	else = {
 		every_vassal = {
 			save_scope_as = ha_ig_vassal
 			if = {
 				limit = { house = scope:ha_ig_house }
-				debug_log = "iron_grip: pass 1 - skip [ha_ig_vassal.GetName]: same house"
+				debug_log = "iron_grip: pass 1 - skip vassal: same house"
 			}
 			else_if = {
 				limit = { is_imprisoned = yes }
-				debug_log = "iron_grip: pass 1 - skip [ha_ig_vassal.GetName]: already imprisoned"
+				debug_log = "iron_grip: pass 1 - skip vassal: already imprisoned"
 			}
 			else_if = {
 				limit = {
@@ -52,7 +58,7 @@ ha_ig_imprison_effect = {
 						scope:ha_ig_ruler = { has_imprisonment_reason = scope:ha_ig_vassal }
 					}
 				}
-				debug_log = "iron_grip: pass 1 - skip [ha_ig_vassal.GetName]: [ha_ig_ruler.GetName] has no imprisonment reason against them"
+				debug_log = "iron_grip: pass 1 - skip vassal: ruler has no imprisonment reason"
 			}
 			else_if = {
 				limit = {
@@ -60,14 +66,30 @@ ha_ig_imprison_effect = {
 						scope:ha_ig_ruler = { max_military_strength > scope:ha_ig_vassal.max_military_strength }
 					}
 				}
-				debug_log = "iron_grip: pass 1 - skip [ha_ig_vassal.GetName]: their army ([ha_ig_vassal.MaxMilitaryStrength|0]) is not weaker than [ha_ig_ruler.GetName]'s ([ha_ig_ruler.MaxMilitaryStrength|0])"
+				debug_log = "iron_grip: pass 1 - skip vassal: not weaker than ruler"
+			}
+			else_if = {
+				limit = {
+					NOT = {
+						scope:ha_ig_ruler = {
+							is_character_interaction_valid = {
+								recipient = scope:ha_ig_vassal
+								interaction = imprison_interaction
+							}
+						}
+					}
+				}
+				debug_log = "iron_grip: pass 1 - skip vassal: imprison interaction not currently valid"
 			}
 			else = {
-				debug_log = "iron_grip: pass 1 - IMPRISONING [ha_ig_vassal.GetName] (by [ha_ig_ruler.GetName])"
+				debug_log = "iron_grip: pass 1 - RUNNING vanilla imprison_interaction (scopes below)"
+				debug_log_scopes = yes
 				scope:ha_ig_ruler = {
-					imprison = {
-						target = scope:ha_ig_vassal
-						type = dungeon
+					run_interaction = {
+						interaction = imprison_interaction
+						actor = scope:ha_ig_ruler
+						recipient = scope:ha_ig_vassal
+						send_threshold = decline
 					}
 				}
 			}
@@ -79,14 +101,14 @@ ha_ig_imprison_effect = {
 ha_ig_revoke_effect = {
 	if = {
 		limit = { NOT = { any_vassal = { always = yes } } }
-		debug_log = "iron_grip: pass 2 - [ha_ig_ruler.GetName] has no direct vassals"
+		debug_log = "iron_grip: pass 2 - ruler has no direct vassals"
 	}
 	else = {
 		every_vassal = {
 			save_scope_as = ha_ig_vassal
 			if = {
 				limit = { house = scope:ha_ig_house }
-				debug_log = "iron_grip: pass 2 - skip [ha_ig_vassal.GetName]: same house"
+				debug_log = "iron_grip: pass 2 - skip vassal: same house"
 			}
 			else_if = {
 				limit = {
@@ -94,7 +116,7 @@ ha_ig_revoke_effect = {
 						scope:ha_ig_ruler = { has_revoke_title_reason = scope:ha_ig_vassal }
 					}
 				}
-				debug_log = "iron_grip: pass 2 - skip [ha_ig_vassal.GetName]: [ha_ig_ruler.GetName] has no revoke reason against them"
+				debug_log = "iron_grip: pass 2 - skip vassal: ruler has no revoke reason"
 			}
 			else_if = {
 				limit = {
@@ -105,7 +127,7 @@ ha_ig_revoke_effect = {
 						}
 					}
 				}
-				debug_log = "iron_grip: pass 2 - skip [ha_ig_vassal.GetName]: no revokable landed title (county+)"
+				debug_log = "iron_grip: pass 2 - skip vassal: no revokable landed title (county+)"
 			}
 			else_if = {
 				limit = {
@@ -113,10 +135,11 @@ ha_ig_revoke_effect = {
 						scope:ha_ig_ruler = { max_military_strength > scope:ha_ig_vassal.max_military_strength }
 					}
 				}
-				debug_log = "iron_grip: pass 2 - skip [ha_ig_vassal.GetName]: their army ([ha_ig_vassal.MaxMilitaryStrength|0]) is not weaker than [ha_ig_ruler.GetName]'s ([ha_ig_ruler.MaxMilitaryStrength|0])"
+				debug_log = "iron_grip: pass 2 - skip vassal: not weaker than ruler"
 			}
 			else = {
-				debug_log = "iron_grip: pass 2 - REVOKING [ha_ig_vassal.GetPrimaryTitle.GetName] from [ha_ig_vassal.GetName] (by [ha_ig_ruler.GetName])"
+				debug_log = "iron_grip: pass 2 - REVOKING primary title (ruler/vassal scopes below)"
+				debug_log_scopes = yes
 				create_title_and_vassal_change = {
 					type = revoked
 					save_scope_as = ha_ig_change
@@ -141,7 +164,7 @@ ha_ig_revoke_effect = {
 ha_ig_grant_effect = {
 	if = {
 		limit = { domain_size > domain_limit }
-		debug_log = "iron_grip: pass 3 - [ha_ig_ruler.GetName] is over domain limit ([ha_ig_ruler.GetDomainSize]/[ha_ig_ruler.GetDomainLimit]), starting grant loop"
+		debug_log = "iron_grip: pass 3 - ruler over domain limit, starting grant loop"
 		while = {
 			limit = {
 				domain_size > domain_limit
@@ -150,15 +173,16 @@ ha_ig_grant_effect = {
 			ha_ig_grant_one_effect = yes
 		}
 		remove_local_variable = ha_ig_grant_stop
-		debug_log = "iron_grip: pass 3 - grant loop ended for [ha_ig_ruler.GetName] ([ha_ig_ruler.GetDomainSize]/[ha_ig_ruler.GetDomainLimit])"
+		debug_log = "iron_grip: pass 3 - grant loop ended"
 	}
 	else = {
-		debug_log = "iron_grip: pass 3 - [ha_ig_ruler.GetName] is within domain limit, skipped"
+		debug_log = "iron_grip: pass 3 - ruler within domain limit, skipped"
 	}
 }
 
 # One grant iteration. Rebuilds candidates each time (new grantees become landed).
 ha_ig_grant_one_effect = {
+	debug_log = "iron_grip: pass 3 - grant iteration, scanning house members"
 	every_in_list = {
 		list = ha_ig_grant_candidates
 		remove_from_list = ha_ig_grant_candidates
@@ -168,26 +192,25 @@ ha_ig_grant_one_effect = {
 
 	scope:ha_ig_house = {
 		every_house_member = {
-			save_scope_as = ha_ig_candidate
 			if = {
 				limit = { this = scope:ha_ig_ruler }
-				debug_log = "iron_grip: pass 3 - skip [ha_ig_candidate.GetName]: is the ruler"
+				debug_log = "iron_grip: pass 3 - skip member: is the ruler"
 			}
 			else_if = {
 				limit = { is_landed = yes }
-				debug_log = "iron_grip: pass 3 - skip [ha_ig_candidate.GetName]: already landed"
+				debug_log = "iron_grip: pass 3 - skip member: already landed"
 			}
 			else_if = {
 				limit = { NOT = { is_adult = yes } }
-				debug_log = "iron_grip: pass 3 - skip [ha_ig_candidate.GetName]: not adult"
+				debug_log = "iron_grip: pass 3 - skip member: not adult"
 			}
 			else_if = {
 				limit = { is_imprisoned = yes }
-				debug_log = "iron_grip: pass 3 - skip [ha_ig_candidate.GetName]: imprisoned"
+				debug_log = "iron_grip: pass 3 - skip member: imprisoned"
 			}
 			else_if = {
 				limit = { has_trait = incapable }
-				debug_log = "iron_grip: pass 3 - skip [ha_ig_candidate.GetName]: incapable"
+				debug_log = "iron_grip: pass 3 - skip member: incapable"
 			}
 			else_if = {
 				limit = {
@@ -200,7 +223,7 @@ ha_ig_grant_one_effect = {
 						NOT = { house = scope:ha_ig_house }
 					}
 				}
-				debug_log = "iron_grip: pass 3 - skip [ha_ig_candidate.GetName]: outsider patrilineal marriage"
+				debug_log = "iron_grip: pass 3 - skip member: outsider patrilineal marriage"
 			}
 			else_if = {
 				limit = {
@@ -230,10 +253,10 @@ ha_ig_grant_one_effect = {
 						}
 					}
 				}
-				debug_log = "iron_grip: pass 3 - skip [ha_ig_candidate.GetName]: fails heir-safety criteria"
+				debug_log = "iron_grip: pass 3 - skip member: fails heir-safety criteria"
 			}
 			else = {
-				debug_log = "iron_grip: pass 3 - candidate OK: [ha_ig_candidate.GetName]"
+				debug_log = "iron_grip: pass 3 - candidate OK, added to list"
 				add_to_list = ha_ig_grant_candidates
 			}
 		}
@@ -267,7 +290,8 @@ ha_ig_grant_one_effect = {
 		}
 		if = {
 			limit = { exists = scope:ha_ig_title }
-			debug_log = "iron_grip: pass 3 - GRANTING [ha_ig_title.GetName] to [ha_ig_recipient.GetName] (from [ha_ig_ruler.GetName])"
+			debug_log = "iron_grip: pass 3 - GRANTING county (recipient/title scopes below)"
+			debug_log_scopes = yes
 			create_title_and_vassal_change = {
 				type = granted
 				save_scope_as = ha_ig_grant_change
@@ -282,7 +306,7 @@ ha_ig_grant_one_effect = {
 			resolve_title_and_vassal_change = scope:ha_ig_grant_change
 		}
 		else = {
-			debug_log = "iron_grip: pass 3 - STOP: [ha_ig_ruler.GetName] has no grantable county (all primary/capital)"
+			debug_log = "iron_grip: pass 3 - STOP: no grantable county (all primary/capital)"
 			set_local_variable = {
 				name = ha_ig_grant_stop
 				value = yes
@@ -290,7 +314,7 @@ ha_ig_grant_one_effect = {
 		}
 	}
 	else = {
-		debug_log = "iron_grip: pass 3 - STOP: no eligible recipient for [ha_ig_ruler.GetName]"
+		debug_log = "iron_grip: pass 3 - STOP: no eligible recipient"
 		set_local_variable = {
 			name = ha_ig_grant_stop
 			value = yes
