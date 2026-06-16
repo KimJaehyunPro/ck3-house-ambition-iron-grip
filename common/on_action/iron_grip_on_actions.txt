@@ -1,13 +1,13 @@
 ﻿###############################################################################
 # House Ambition: Iron Grip — on_action
 #
-# CK3 has NO monthly playable pulse (only yearly / quarterly / etc.), so the
-# monthly cadence is driven by the self-rescheduling event ha_ig.100. Here we
-# only SEED that event on the human player:
+# CK3 has NO monthly playable pulse, so the monthly cadence is driven by the
+# self-rescheduling event ha_ig.100. ha_ig_player_setup_effect starts that
+# chain on the human player (once per character) and applies the default mode
+# (whole dynasty) the first time the dynasty is seen. We seed it:
 #   - at game start (immediate on a fresh game), and
-#   - on the quarterly pulse as a safety net, so it also starts after
-#     succession or when the mod is added to an existing save.
-# A character flag prevents a player from ever running two tick chains at once.
+#   - on the quarterly pulse as a safety net (succession, or the mod added to
+#     an existing save).
 ###############################################################################
 
 on_game_start_after_lobby = {
@@ -19,12 +19,8 @@ on_game_start_after_lobby = {
 ha_ig_seed_monthly_on_start = {
 	effect = {
 		every_player = {
-			limit = {
-				is_ai = no
-				NOT = { has_character_flag = ha_ig_monthly_tick_running }
-			}
-			add_character_flag = ha_ig_monthly_tick_running
-			trigger_event = { id = ha_ig.100 }
+			limit = { is_ai = no }
+			ha_ig_player_setup_effect = yes
 		}
 	}
 }
@@ -38,10 +34,8 @@ quarterly_playable_pulse = {
 ha_ig_seed_monthly_tick = {
 	trigger = {
 		is_ai = no
-		NOT = { has_character_flag = ha_ig_monthly_tick_running }
 	}
 	effect = {
-		add_character_flag = ha_ig_monthly_tick_running
-		trigger_event = { id = ha_ig.100 }
+		ha_ig_player_setup_effect = yes
 	}
 }

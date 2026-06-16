@@ -2,21 +2,78 @@
 # House Ambition: Iron Grip — scripted effects
 ###############################################################################
 
-# Entry point. root = player. Runs all passes for every landed AI house member.
+# Entry point. root = player (the monthly clock). Activates the AI rulers:
+#   - Dynasty mode (dynasty is in ha_ig_dynasty_list): every AI dynasty member,
+#     so all houses of the dynasty compete — each still only targets vassals
+#     outside its OWN house, so cadet houses act against the player's house too.
+#   - House mode (house is in ha_ig_house_list): only AI members of root's house.
+# Each activated ruler runs the three passes relative to their own house.
 ha_ig_sweep_effect = {
 	debug_log = "iron_grip: ===== starting sweep ====="
-	root.house = {
-		every_house_member = {
-			limit = {
-				is_ai = yes
-				is_landed = yes
-				NOT = { is_imprisoned = yes }
-				NOT = { has_trait = incapable }
+	if = {
+		limit = {
+			any_in_global_list = { variable = ha_ig_dynasty_list  this = root.dynasty }
+		}
+		debug_log = "iron_grip: dynasty mode - activating all AI dynasty rulers"
+		root.dynasty = {
+			every_dynasty_member = {
+				limit = {
+					is_ai = yes
+					is_landed = yes
+					NOT = { is_imprisoned = yes }
+					NOT = { has_trait = incapable }
+				}
+				ha_ig_house_law_effect = yes
 			}
-			ha_ig_house_law_effect = yes
 		}
 	}
+	else_if = {
+		limit = {
+			any_in_global_list = { variable = ha_ig_house_list  this = root.house }
+		}
+		debug_log = "iron_grip: house mode - activating AI rulers of root's house"
+		root.house = {
+			every_house_member = {
+				limit = {
+					is_ai = yes
+					is_landed = yes
+					NOT = { is_imprisoned = yes }
+					NOT = { has_trait = incapable }
+				}
+				ha_ig_house_law_effect = yes
+			}
+		}
+	}
+	else = {
+		debug_log = "iron_grip: sweep called but neither dynasty nor house mode is enabled"
+	}
 	debug_log = "iron_grip: ===== sweep finished ====="
+}
+
+# Per-player setup, called from the on_action seeders. Starts this player's
+# monthly tick chain (once, guarded by a character flag) and applies the
+# default mode the first time this dynasty is ever seen.
+ha_ig_player_setup_effect = {
+	if = {
+		limit = { NOT = { has_character_flag = ha_ig_monthly_tick_running } }
+		add_character_flag = ha_ig_monthly_tick_running
+		trigger_event = { id = ha_ig.100 }
+	}
+	ha_ig_apply_default_effect = yes
+}
+
+# Default mode = whole dynasty. Applied once per dynasty (guarded by a dynasty
+# variable) so it never overrides a choice the player later makes in the panel.
+ha_ig_apply_default_effect = {
+	if = {
+		limit = { dynasty = { NOT = { has_variable = ha_ig_initialized } } }
+		dynasty = { set_variable = ha_ig_initialized }
+		add_to_global_variable_list = {
+			name = ha_ig_dynasty_list
+			target = dynasty
+		}
+		debug_log = "iron_grip: default applied - dynasty mode enabled for this dynasty"
+	}
 }
 
 # Per-ruler dispatcher. this = the AI house member ruler.

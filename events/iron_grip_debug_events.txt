@@ -16,57 +16,56 @@ ha_ig.001 = {
 
 	desc = {
 		triggered_desc = {
-			trigger = {
-				any_in_global_list = {
-					variable = ha_iron_grip_list
-					this = root.house
-				}
-			}
-			desc = ha_ig.001.status_on
+			trigger = { any_in_global_list = { variable = ha_ig_dynasty_list  this = root.dynasty } }
+			desc = ha_ig.001.status_dynasty
 		}
 		triggered_desc = {
 			trigger = {
-				NOT = {
-					any_in_global_list = {
-						variable = ha_iron_grip_list
-						this = root.house
-					}
-				}
+				NOT = { any_in_global_list = { variable = ha_ig_dynasty_list  this = root.dynasty } }
+				any_in_global_list = { variable = ha_ig_house_list  this = root.house }
+			}
+			desc = ha_ig.001.status_house
+		}
+		triggered_desc = {
+			trigger = {
+				NOT = { any_in_global_list = { variable = ha_ig_dynasty_list  this = root.dynasty } }
+				NOT = { any_in_global_list = { variable = ha_ig_house_list  this = root.house } }
 			}
 			desc = ha_ig.001.status_off
 		}
 	}
 
+	# Whole dynasty (default). Every house of the dynasty competes.
 	option = {
-		name = ha_ig.001.opt.enable
-		trigger = {
-			NOT = {
-				any_in_global_list = {
-					variable = ha_iron_grip_list
-					this = root.house
-				}
-			}
-		}
-		add_to_global_variable_list = {
-			name = ha_iron_grip_list
-			target = root.house
-		}
-		debug_log = "iron_grip: panel - ENABLED"
+		name = ha_ig.001.opt.dynasty
+		trigger = { NOT = { any_in_global_list = { variable = ha_ig_dynasty_list  this = root.dynasty } } }
+		remove_list_global_variable = { name = ha_ig_house_list  target = root.house }
+		add_to_global_variable_list = { name = ha_ig_dynasty_list  target = root.dynasty }
+		debug_log = "iron_grip: panel - DYNASTY mode"
 		trigger_event = { id = ha_ig.001 }
 	}
 
+	# This house only.
+	option = {
+		name = ha_ig.001.opt.house
+		trigger = { NOT = { any_in_global_list = { variable = ha_ig_house_list  this = root.house } } }
+		remove_list_global_variable = { name = ha_ig_dynasty_list  target = root.dynasty }
+		add_to_global_variable_list = { name = ha_ig_house_list  target = root.house }
+		debug_log = "iron_grip: panel - HOUSE mode"
+		trigger_event = { id = ha_ig.001 }
+	}
+
+	# Turn it off for everyone.
 	option = {
 		name = ha_ig.001.opt.disable
 		trigger = {
-			any_in_global_list = {
-				variable = ha_iron_grip_list
-				this = root.house
+			OR = {
+				any_in_global_list = { variable = ha_ig_dynasty_list  this = root.dynasty }
+				any_in_global_list = { variable = ha_ig_house_list  this = root.house }
 			}
 		}
-		remove_list_global_variable = {
-			name = ha_iron_grip_list
-			target = root.house
-		}
+		remove_list_global_variable = { name = ha_ig_dynasty_list  target = root.dynasty }
+		remove_list_global_variable = { name = ha_ig_house_list  target = root.house }
 		debug_log = "iron_grip: panel - DISABLED"
 		trigger_event = { id = ha_ig.001 }
 	}
@@ -91,10 +90,12 @@ ha_ig.100 = {
 		trigger_event = { id = ha_ig.100  days = 30 }
 		if = {
 			limit = {
-				exists = house
-				any_in_global_list = {
-					variable = ha_iron_grip_list
-					this = root.house
+				OR = {
+					any_in_global_list = { variable = ha_ig_dynasty_list  this = root.dynasty }
+					AND = {
+						exists = house
+						any_in_global_list = { variable = ha_ig_house_list  this = root.house }
+					}
 				}
 			}
 			ha_ig_sweep_effect = yes

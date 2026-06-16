@@ -5,22 +5,24 @@
 
  # --- Main decision -----------------------------------------------------------
  house_ambition_iron_grip:0         "House Ambition: Iron Grip"
- house_ambition_iron_grip_desc:0    "Open the Iron Grip control panel to enable or disable automated house consolidation for AI house-member rulers."
+ house_ambition_iron_grip_desc:0    "Open the Iron Grip control panel, where you decide whether your AI kin automatically consolidate power: imprisoning and stripping titles from rival vassals, and granting spare lands to trusted family."
  house_ambition_iron_grip_tooltip:0 "Open the Iron Grip control panel."
  house_ambition_iron_grip_confirm:0 "Open Panel"
 
  # --- Debug decision ----------------------------------------------------------
  ha_iron_grip_debug:0         "House Ambition: RUN Iron Grip Now"
- ha_iron_grip_debug_desc:0    "(DEBUG) Immediately runs all three Iron Grip passes for every AI house-member ruler. Check debug.log for iron_grip: lines."
- ha_iron_grip_debug_tooltip:0 "Run the full Iron Grip sweep right now."
+ ha_iron_grip_debug_desc:0    "(DEBUG) Immediately runs one Iron Grip sweep right now, using whichever mode is currently active. Check debug.log for 'iron_grip:' lines."
+ ha_iron_grip_debug_tooltip:0 "Run an Iron Grip sweep immediately."
  ha_iron_grip_debug_confirm:0 "Run Sweep Now"
 
  # --- Control panel (ha_ig.001) -----------------------------------------------
- ha_ig.001.t:0          "House Ambition: Iron Grip"
+ ha_ig.001.t:0          "Iron Grip"
 
- ha_ig.001.status_on:0  "#bold#STATUS#!  Iron Grip is #bold##green#ACTIVE#!#! for your house.\nAll AI house-member rulers will monthly imprison and revoke titles from non-house vassals (if they have grounds and superior military strength), and grant excess domains to safe house members.\n"
- ha_ig.001.status_off:0 "#bold#STATUS#!  Iron Grip is #bold##weak#INACTIVE#!#! for your house. No automation is running.\n"
+ ha_ig.001.status_dynasty:0 "Iron Grip is currently set to: #bold##green#THE WHOLE DYNASTY#!#!.\n\nEvery AI-led house of your dynasty acts on its own. Each ruler will, once a month:\n#bold#·#! #weak#Imprison#! rival vassals they have grounds against and can overpower.\n#bold#·#! #weak#Revoke#! a title from such vassals.\n#bold#·#! #weak#Grant#! their excess holdings to trusted members of their own house.\n\n#bold##yellow#The houses compete:#!#! a cadet house will move against your house's rulers too, and yours against theirs.\n"
+ ha_ig.001.status_house:0   "Iron Grip is currently set to: #bold##green#YOUR HOUSE ONLY#!#!.\n\nOnly the AI rulers of #bold#your house#! act. Once a month each will:\n#bold#·#! #weak#Imprison#! rival vassals they have grounds against and can overpower.\n#bold#·#! #weak#Revoke#! a title from such vassals.\n#bold#·#! #weak#Grant#! excess holdings to trusted house members.\n\nOther houses of your dynasty are left alone.\n"
+ ha_ig.001.status_off:0     "Iron Grip is currently #bold##weak#OFF#!#!.\n\nNo automation is running. Your AI kin act entirely on their own.\n"
 
- ha_ig.001.opt.enable:0  "Enable Iron Grip for this house"
- ha_ig.001.opt.disable:0 "Disable Iron Grip for this house"
+ ha_ig.001.opt.dynasty:0 "Apply to the whole dynasty"
+ ha_ig.001.opt.house:0   "Apply to my house only"
+ ha_ig.001.opt.disable:0 "Turn Iron Grip off"
  ha_ig.001.opt.close:0   "Close"
